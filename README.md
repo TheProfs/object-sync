@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/TheProfs/object-sync.svg?branch=master)](https://travis-ci.org/TheProfs/object-sync)
+
 # \<object-sync\>
 
 Polymer 1.x element for syncing an object to a remote server
