@@ -1,0 +1,34 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+
+<!--
+`object-sync`
+Sync an object to a remote server
+
+@demo demo/index.html
+-->
+
+<dom-module id="object-sync">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <h2>Hello [[prop1]]!</h2>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'object-sync',
+
+      properties: {
+        prop1: {
+          type: String,
+          value: 'object-sync',
+        },
+      },
+
+    });
+  </script>
+</dom-module>
