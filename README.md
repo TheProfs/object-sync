@@ -41,5 +41,5 @@ $ npm run dev
 ### Running Tests
 
 ```bash
-$ polymer test
+$ npm test
 ```
