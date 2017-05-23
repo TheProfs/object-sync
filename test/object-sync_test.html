@@ -63,7 +63,7 @@
 
       suite("object-sync", function() {
 
-        test('instantiating the element works', function() {
+        test("Instantiating the element works", function() {
           const element = fixture("basic");
           assert.equal(element.is, "object-sync");
         });
@@ -73,52 +73,57 @@
 
           element.set("value", { foo: "default-value" });
 
-          expect(element.loading).to.be.a("Boolean");
-          expect(element.loading).to.equal(true);
+          element.addEventListener("value-fetched", function(e) {
+            /*
+             * `value` included in both event payload and on `value` prop of
+             * element
+             */
 
-          element.addEventListener("initial-value", function() {
+            // Event payload
+            expect(e.detail).to.be.an("Object");
+            expect(e.detail).to.have.property("foo");
+
+            expect(e.detail.foo).to.be.a("String");
+            expect(e.detail.foo).to.equal("initial-remote");
+
+            // Element prop
             expect(element.value).to.be.an("Object");
             expect(element.value).to.have.property("foo");
 
             expect(element.value.foo).to.be.a("String");
             expect(element.value.foo).to.equal("initial-remote");
-
-            expect(element.loading).to.equal(false);
             done();
           });
         });
 
-        test(`instantiating the element with initial/default data ignores
+        test(`Instantiating the element with initial/default data ignores
               syncing until initial data has been fetched`, (done) => {
 
           const element = fixture("basic");
 
           element.set("value", { foo: "default-value" });
 
-          element.addEventListener("initial-value", function() {
+          element.addEventListener("value-fetched", function() {
             done();
           });
 
-          element.addEventListener("value-synced", function() {
+          element.addEventListener("value-saved", function() {
             done(new Error("Attempted to sync default value before initial value was fetched"));
           });
         });
 
 
-        test(`changing the value object, syncs the value with the server and
+        test(`Changing the value object, syncs the value with the server and
               notifies sync success`, (done) => {
 
           const element = fixture("basic");
 
-          expect(element.loading).to.be.a("Boolean");
-          expect(element.loading).to.equal(true);
-
-          element.addEventListener("initial-value", () => {
+          element.addEventListener("value-fetched", () => {
             expect(element.loading).to.equal(false);
             element.set("value", { foo: "new-value" });
           });
 
-          element.addEventListener("value-synced", (e) => {
+          element.addEventListener("value-saved", (e) => {
             expect(element.loading).to.equal(false);
             expect(e.detail.detail.status).to.be.a("Number");
             expect(e.detail.detail.status).to.equal(204);
@@ -127,8 +132,8 @@
         });
 
 
-        test(`Ajax errors notify an error and preserves the initial/default
-              data intact`, (done) => {
+        test(`Ajax errors notify an error and the initial/default
+              data is preserved intact`, (done) => {
           const element = fixture("with-ajax-error");
           element.set("value", { foo: "default-value" });
 
