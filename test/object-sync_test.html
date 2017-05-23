@@ -6,23 +6,141 @@
 
     <title>object-sync test</title>
 
-    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
-    <script src="../../web-component-tester/browser.js"></script>
+    <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../bower_components/web-component-tester/browser.js"></script>
 
     <link rel="import" href="../object-sync.html">
   </head>
   <body>
     <test-fixture id="basic">
       <template>
-        <object-sync></object-sync>
+        <object-sync url="/responds_to_get_with_json"></object-sync>
       </template>
     </test-fixture>
 
+    <test-fixture id="with-ajax-error">
+      <template>
+        <object-sync url="/wrong-url"></object-sync>
+      </template>
+    </test-fixture>
     <script>
-      suite('object-sync', function() {
+      // Follows guide from: https://www.polymer-project.org/1.0/docs/tools/tests
+
+      /*
+       * Fake server
+       */
+      let server;
+
+      setup(() => {
+        server = sinon.fakeServer.create();
+        server.autoRespond = true;
+        server.respondWith(
+          "GET",
+          /\/responds_to_get_with_json.*/, [
+            200,
+            "'Content-Type': 'application/json'",
+            '{ "foo" : "initial-remote"}'
+          ]
+        );
+
+        server.respondWith(
+          "PUT",
+          /\/responds_to_get_with_json.*/, [
+            204,
+            "'Content-Type': 'application/json'",
+            '{"success": true }'
+          ]
+        );
+      });
+
+      teardown(() => {
+        server.restore();
+      });
+
+      /*
+       * Actual Tests
+       */
+
+      suite("object-sync", function() {
+
         test('instantiating the element works', function() {
-          var element = fixture('basic');
-          assert.equal(element.is, 'object-sync');
+          const element = fixture("basic");
+          assert.equal(element.is, "object-sync");
+        });
+
+        test("instantiating the element fetches the initial data", function(done) {
+          const element = fixture("basic");
+
+          element.set("value", { foo: "default-value" });
+
+          expect(element.loading).to.be.a("Boolean");
+          expect(element.loading).to.equal(true);
+
+          element.addEventListener("initial-value", function() {
+            expect(element.value).to.be.an("Object");
+            expect(element.value).to.have.property("foo");
+
+            expect(element.value.foo).to.be.a("String");
+            expect(element.value.foo).to.equal("initial-remote");
+
+            expect(element.loading).to.equal(false);
+            done();
+          });
+        });
+
+        test(`instantiating the element with initial/default data ignores
+              syncing until initial data has been fetched`, (done) => {
+
+          const element = fixture("basic");
+
+          element.set("value", { foo: "default-value" });
+
+          element.addEventListener("initial-value", function() {
+            done();
+          });
+
+          element.addEventListener("value-synced", function() {
+            done(new Error("Attempted to sync default value before initial value was fetched"));
+          });
+        });
+
+
+        test(`changing the value object, syncs the value with the server and
+              notifies sync success`, (done) => {
+
+          const element = fixture("basic");
+
+          expect(element.loading).to.be.a("Boolean");
+          expect(element.loading).to.equal(true);
+
+          element.addEventListener("initial-value", () => {
+            expect(element.loading).to.equal(false);
+            element.set("value", { foo: "new-value" });
+          });
+
+          element.addEventListener("value-synced", (e) => {
+            expect(element.loading).to.equal(false);
+            expect(e.detail.detail.status).to.be.a("Number");
+            expect(e.detail.detail.status).to.equal(204);
+            done();
+          });
+        });
+
+
+        test(`Ajax errors notify an error and preserves the initial/default
+              data intact`, (done) => {
+          const element = fixture("with-ajax-error");
+          element.set("value", { foo: "default-value" });
+
+          element.addEventListener("error", (e) => {
+            expect(element.value).to.be.an("Object");
+            expect(element.value).to.have.property("foo");
+
+            expect(element.value.foo).to.be.a("String");
+            expect(element.value.foo).to.equal("default-value");
+
+            done();
+          });
         });
       });
     </script>

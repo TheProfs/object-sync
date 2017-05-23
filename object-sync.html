@@ -1,4 +1,5 @@
 <link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
 
 <!--
 `object-sync`
@@ -14,20 +15,82 @@ Sync an object to a remote server
         display: block;
       }
     </style>
-    <h2>Hello [[prop1]]!</h2>
+
+    <iron-ajax
+      id="ajaxGet"
+      method="GET"
+      url="[[url]]"
+      loading="{{loading}}"
+      last-error="{{lastError}}"
+      on-response="_gotRemoteValue"
+      on-error="_notifyAjaxError">
+    </iron-ajax>
+    <iron-ajax
+      id="ajaxPut"
+      method="PUT"
+      url="[[url]]"
+      loading="{{loading}}"
+      last-error="{{lastError}}"
+      on-response="_putRemoteValue"
+      on-error="_notifyAjaxError">
+    </iron-ajax>
+    <h2>Hello Object Sync!</h2>
   </template>
 
   <script>
     Polymer({
 
-      is: 'object-sync',
+      is: "object-sync",
 
       properties: {
-        prop1: {
-          type: String,
-          value: 'object-sync',
+        _syncedInitialValue: {
+          type: Boolean,
+          value: false,
+          readOnly: true
         },
+        value: {
+          type: Object
+        },
+        lastError: {
+          type: Object
+        },
+        loading: {
+          type: Boolean,
+          value: false
+        }
       },
+
+      observers: [
+        "_syncChangesToRemote(value.*)"
+      ],
+
+      attached: function() {
+        window.objectSync = this;
+        this.$.ajaxGet.generateRequest();
+      },
+
+      _syncChangesToRemote: function(changes) {
+        if (!this._syncedInitialValue) return false;
+
+        this.debounce("_syncingValueChange", function() {
+          this.$.ajaxPut.body = JSON.stringify(changes.value);
+          this.$.ajaxPut.generateRequest();
+        }, 1000);
+      },
+
+      _gotRemoteValue: function(e) {
+        this.set("value", e.detail.response);
+        this._set_syncedInitialValue(true);
+        this.fire("initial-value", e);
+      },
+
+      _putRemoteValue: function(e) {
+        this.fire("value-synced", e);
+      },
+
+      _notifyAjaxError: function(e) {
+        this.fire("error", e);
+      }
 
     });
   </script>
