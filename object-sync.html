@@ -1,0 +1,166 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
+
+<!--
+`object-sync` syncs an Object to a remote server.
+
+You simply specify a URL where the JSON resource resides.
+
+The URL should accept:
+
+-  `GET` requests for fetching the object
+- `PUT` requests for saving the object
+
+The payload for saving - `PUT` - would be included in the `body` of the request.
+
+The `value` is saved to the server only if it changes *after* it was initially
+fetched successfully from the remote server so you don't have to worry about
+timing issues.
+
+@demo demo/index.html
+-->
+
+<dom-module id="object-sync">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+
+      .label {
+        font-family: Helvetica;
+      }
+    </style>
+
+    <iron-ajax
+      id="ajaxGet"
+      method="GET"
+      url="[[url]]"
+      last-error="{{lastError}}"
+      on-response="_gotRemoteValue"
+      on-error="_notifyAjaxError">
+    </iron-ajax>
+    <iron-ajax
+      id="ajaxPut"
+      method="PUT"
+      url="[[url]]"
+      loading="{{loading}}"
+      last-error="{{lastError}}"
+      on-response="_putRemoteValue"
+      on-error="_notifyAjaxError">
+    </iron-ajax>
+    <span class="label" hidden="[[!loading]]">Loading...</span>
+    <span class="label" hidden="[[!_syncSuccess]]">Saved!</span>
+    <span class="label" hidden="[[!lastError]]">An error occured :(</span>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: "object-sync",
+
+      properties: {
+        /** The URL where the JSON resource resides */
+        url: {
+          type: String
+        },
+
+        /** The data associated with this storage */
+        value: {
+          type: Object,
+          notify: true
+        },
+
+        /** The last Ajax error, if any. */
+        lastError: {
+          type: Object,
+          value: false,
+          notify: true
+        },
+
+        /** True while a save request is in-flight. Only save requests toggle
+        this value. Initial syncing of value with remote does not toggle this
+        value */
+        loading: {
+          type: Boolean,
+          value: false,
+          notify: true
+        },
+
+        _fetchedInitialValue: {
+          type: Boolean,
+          value: false,
+          readOnly: true
+        },
+        _syncSuccess: {
+          type: Boolean,
+          value: false,
+          readOnly: true
+        }
+      },
+
+      /**
+       * Fired when the initial value is succesfully fetched from the server
+       *
+       * @event value-fetched
+       */
+
+       /**
+        * Fired when the value is succesfully saved to remote
+        *
+        * @event value-saved
+        */
+
+       /**
+        * Fired when an Ajax error occurs
+        *
+        * @event error
+        * @param {Object} error The Ajax error event
+        */
+
+      observers: [
+        "_valueChanged(value.*)"
+      ],
+
+      attached: function() {
+        window.objectSync = this;
+        this.$.ajaxGet.generateRequest();
+      },
+
+      _valueChanged: function(changes) {
+        if (!this._fetchedInitialValue) return false;
+
+        this.debounce("_syncingValueChange", function() {
+          this._syncObjectToRemote(changes.value);
+        }, 750);
+      },
+
+      _syncObjectToRemote: function(value) {
+        this.$.ajaxPut.body = JSON.stringify(value);
+        this.$.ajaxPut.generateRequest();
+      },
+
+      _gotRemoteValue: function(e) {
+        this.set("value", e.detail.response);
+        this._set_fetchedInitialValue(true);
+        this.fire("value-fetched", e.detail.response);
+      },
+
+      _putRemoteValue: function(e) {
+        this.fire("value-saved", e);
+        this._setSyncSuccess();
+      },
+
+      _setSyncSuccess: function() {
+        this._set_syncSuccess(true);
+        this.async(function() {
+          this._set_syncSuccess(false);
+        }, 1000);
+      },
+
+      _notifyAjaxError: function(e) {
+        this.fire("error", e);
+      }
+    });
+  </script>
+</dom-module>

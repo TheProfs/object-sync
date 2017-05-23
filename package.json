@@ -1,0 +1,31 @@
+{
+  "name": "object-sync",
+  "version": "0.0.1",
+  "description": "Polymer 1.x element for syncing an object to a remote server",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "polymer test",
+    "dev": "polymer serve & npm run watch",
+    "watch": "browser-sync start --proxy localhost:8081 --files '**/*.html' "
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheProfs/object-sync.git"
+  },
+  "keywords": [
+    "sync",
+    "ajax",
+    "polymer",
+    "polymer",
+    "1.x"
+  ],
+  "author": "@TheProfs",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TheProfs/object-sync/issues"
+  },
+  "homepage": "https://github.com/TheProfs/object-sync#readme"
+}
