@@ -12,13 +12,20 @@ Then run `polymer serve` to serve your element locally.
 
 ## Viewing Your Element
 
-```
+```bash
 $ polymer serve
+```
+
+## Running for Dev
+
+```bash
+# Runs element with auto browser reload on file changes
+$ npm run dev
 ```
 
 ## Running Tests
 
-```
+```bash
 $ polymer test
 ```
 
