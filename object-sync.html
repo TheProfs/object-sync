@@ -47,7 +47,8 @@ timing issues.
       loading="{{loading}}"
       last-error="{{lastError}}"
       on-response="_putRemoteValue"
-      on-error="_notifyAjaxError">
+      on-error="_notifyAjaxError"
+      content-type="application/json">
     </iron-ajax>
     <span class="label" hidden="[[!loading]]">Loading...</span>
     <span class="label" hidden="[[!_syncSuccess]]">Saved!</span>
@@ -131,7 +132,7 @@ timing issues.
         if (!this._fetchedInitialValue) return false;
 
         this.debounce("_syncingValueChange", function() {
-          this._syncObjectToRemote(changes.value);
+          this._syncObjectToRemote(changes.base);
         }, 750);
       },
 
