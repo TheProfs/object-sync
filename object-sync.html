@@ -32,11 +32,6 @@ timing issues.
         @apply --status-label;
       }
 
-      .label.loading {
-        color: #FF9800;
-        @apply --status-label-loading;
-      }
-
       .label.success {
         color: #8BC34A;
         @apply --status-label-success;
@@ -62,13 +57,11 @@ timing issues.
       method="PUT"
       url="[[url]]"
       headers="[[headers]]"
-      loading="{{loading}}"
       last-error="{{lastError}}"
       on-response="_putRemoteValue"
       on-error="_notifyAjaxError"
       content-type="application/json">
     </iron-ajax>
-    <span class="label loading" hidden="[[!loading]]">[[loadingMsg]]</span>
     <span class="label success" hidden="[[!_syncSuccess]]">[[successMsg]]</span>
     <span class="label error" hidden="[[!lastError]]">[[errorMsg]]</span>
   </template>
@@ -102,14 +95,6 @@ timing issues.
           notify: true
         },
 
-        /** `true` while a save request is in-flight. Only save requests toggle
-        this value. Initial syncing of value with remote does not toggle this */
-        loading: {
-          type: Boolean,
-          value: false,
-          notify: true
-        },
-
         /** Set to `true` to enable this element. If false no requests/syncing
         will take place. Most commonly used to conditionally enable syncing
         if for example a user is logged-in. Resetting this value to `true` will
@@ -118,12 +103,6 @@ timing issues.
           type: Boolean,
           value: false,
           observer: "_fetchInitialObject"
-        },
-
-        /** Message to be displayed while sync request is in-flight */
-        loadingMsg: {
-          type: String,
-          value: "Saving.."
         },
 
         /** Message to be displayed if object was synced succesfully */

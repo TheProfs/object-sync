@@ -123,12 +123,10 @@
           const element = fixture("basic");
 
           element.addEventListener("value-fetched", () => {
-            expect(element.loading).to.equal(false);
             element.set("value", { foo: "new-value" });
           });
 
           element.addEventListener("value-saved", (e) => {
-            expect(element.loading).to.equal(false);
             expect(e.detail.detail.status).to.be.a("Number");
             expect(e.detail.detail.status).to.equal(204);
             done();
