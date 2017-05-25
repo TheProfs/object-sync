@@ -3,6 +3,7 @@
 # \<object-sync\>
 
 > Polymer 1.x element for syncing an object to a remote server
+> **Warning:** This is not yet intended for a production release!
 
 You simply specify a URL where the JSON resource resides.
 

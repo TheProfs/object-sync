@@ -68,7 +68,7 @@
           assert.equal(element.is, "object-sync");
         });
 
-        test("instantiating the element fetches the initial data", function(done) {
+        test("setting enabled property on the element fetches the initial data", function(done) {
           const element = fixture("basic");
 
           element.set("value", { foo: "default-value" });
@@ -94,10 +94,12 @@
             expect(element.value.foo).to.equal("initial-remote");
             done();
           });
+
+          element.set("enabled", true);
         });
 
-        test(`Instantiating the element with initial/default data ignores
-              syncing until initial data has been fetched`, (done) => {
+        test(`setting enabled property on the element with initial/default data
+              ignores syncing until initial data has been fetched`, (done) => {
 
           const element = fixture("basic");
 
@@ -110,6 +112,8 @@
           element.addEventListener("value-saved", function() {
             done(new Error("Attempted to sync default value before initial value was fetched"));
           });
+
+          element.set("enabled", true);
         });
 
 
@@ -129,6 +133,8 @@
             expect(e.detail.detail.status).to.equal(204);
             done();
           });
+
+          element.set("enabled", true);
         });
 
 
@@ -146,6 +152,8 @@
 
             done();
           });
+
+          element.set("enabled", true);
         });
       });
     </script>

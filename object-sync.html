@@ -29,6 +29,22 @@ timing issues.
 
       .label {
         font-family: Helvetica;
+        @apply --status-label;
+      }
+
+      .label.loading {
+        color: #FF9800;
+        @apply --status-label-loading;
+      }
+
+      .label.success {
+        color: #8BC34A;
+        @apply --status-label-success;
+      }
+
+      .label.error {
+        color: #F44336;
+        @apply --status-label-error;
       }
     </style>
 
@@ -36,6 +52,7 @@ timing issues.
       id="ajaxGet"
       method="GET"
       url="[[url]]"
+      headers="[[headers]]"
       last-error="{{lastError}}"
       on-response="_gotRemoteValue"
       on-error="_notifyAjaxError">
@@ -44,15 +61,16 @@ timing issues.
       id="ajaxPut"
       method="PUT"
       url="[[url]]"
+      headers="[[headers]]"
       loading="{{loading}}"
       last-error="{{lastError}}"
       on-response="_putRemoteValue"
       on-error="_notifyAjaxError"
       content-type="application/json">
     </iron-ajax>
-    <span class="label" hidden="[[!loading]]">Loading...</span>
-    <span class="label" hidden="[[!_syncSuccess]]">Saved!</span>
-    <span class="label" hidden="[[!lastError]]">An error occured :(</span>
+    <span class="label loading" hidden="[[!loading]]">[[loadingMsg]]</span>
+    <span class="label success" hidden="[[!_syncSuccess]]">[[successMsg]]</span>
+    <span class="label error" hidden="[[!lastError]]">[[errorMsg]]</span>
   </template>
 
   <script>
@@ -64,6 +82,11 @@ timing issues.
         /** The URL where the JSON resource resides */
         url: {
           type: String
+        },
+
+        /** The request headers for both `GET` & `PUT` */
+        url: {
+          type: Object
         },
 
         /** The data associated with this storage */
@@ -79,13 +102,40 @@ timing issues.
           notify: true
         },
 
-        /** True while a save request is in-flight. Only save requests toggle
-        this value. Initial syncing of value with remote does not toggle this
-        value */
+        /** `true` while a save request is in-flight. Only save requests toggle
+        this value. Initial syncing of value with remote does not toggle this */
         loading: {
           type: Boolean,
           value: false,
           notify: true
+        },
+
+        /** Set to `true` to enable this element. If false no requests/syncing
+        will take place. Most commonly used to conditionally enable syncing
+        if for example a user is logged-in. Resetting this value to `true` will
+        re-trigger an initial fetch */
+        enabled: {
+          type: Boolean,
+          value: false,
+          observer: "_fetchInitialObject"
+        },
+
+        /** Message to be displayed while sync request is in-flight */
+        loadingMsg: {
+          type: String,
+          value: "Saving.."
+        },
+
+        /** Message to be displayed if object was synced succesfully */
+        successMsg: {
+          type: String,
+          value: "Saved"
+        },
+
+        /** Message to be displayed if any of the requests fail */
+        errorMsg: {
+          type: String,
+          value: "An error occured :("
         },
 
         _fetchedInitialValue: {
@@ -97,7 +147,7 @@ timing issues.
           type: Boolean,
           value: false,
           readOnly: true
-        }
+        },
       },
 
       /**
@@ -125,18 +175,35 @@ timing issues.
 
       attached: function() {
         window.objectSync = this;
-        this.$.ajaxGet.generateRequest();
       },
 
       _valueChanged: function(changes) {
         if (!this._fetchedInitialValue) return false;
 
         this.debounce("_syncingValueChange", function() {
-          this._syncObjectToRemote(changes.base);
+          this._syncObjectToRemote(changes.base, this.enabled);
         }, 750);
       },
 
-      _syncObjectToRemote: function(value) {
+      _fetchInitialObject: function(enabled) {
+        if (!enabled) return false;
+
+        /*
+         * `enabled` prop observer might trigger many times, until it's set,
+         * for example if it's bound to a logged-in-user type variable, user
+         * would be first logged-out until the system logs him in
+         * (in AJAX-login mechanisms)
+         *
+         * @TODO investigate a better way of handling such issues
+         */
+        this.debounce("_fetchInitialObject", function() {
+          this.$.ajaxGet.generateRequest();
+        }.bind(this));
+      },
+
+      _syncObjectToRemote: function(value, enabled) {
+        if (!enabled) return false;
+
         this.$.ajaxPut.body = JSON.stringify(value);
         this.$.ajaxPut.generateRequest();
       },
