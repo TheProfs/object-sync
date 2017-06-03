@@ -68,7 +68,7 @@
           assert.equal(element.is, "object-sync");
         });
 
-        test("setting enabled property on the element fetches the initial data", function(done) {
+        test("setting shouldFetch property on the element fetches the initial data", function(done) {
           const element = fixture("basic");
 
           element.set("value", { foo: "default-value" });
@@ -95,10 +95,10 @@
             done();
           });
 
-          element.set("enabled", true);
+          element.set("shouldFetch", true);
         });
 
-        test(`setting enabled property on the element with initial/default data
+        test(`setting shouldFetch property on the element with initial/default data
               ignores syncing until initial data has been fetched`, (done) => {
 
           const element = fixture("basic");
@@ -113,7 +113,7 @@
             done(new Error("Attempted to sync default value before initial value was fetched"));
           });
 
-          element.set("enabled", true);
+          element.set("shouldFetch", true);
         });
 
 
@@ -132,7 +132,27 @@
             done();
           });
 
-          element.set("enabled", true);
+          element.set("shouldFetch", true);
+        });
+
+        test(`Setting disabled to true prevents all requests`, (done) => {
+
+          const element = fixture("basic");
+          element.set("disabled", true);
+
+          element.addEventListener("value-fetched", () => {
+            done(new Error("Attempted to fetch value while disabled"));
+          });
+
+          element.addEventListener("value-saved", (e) => {
+            done(new Error("Attempted to save value while disabled"));
+          });
+
+          setTimeout(function() {
+            done();
+          }, 750);
+
+          element.set("shouldFetch", true);
         });
 
 
@@ -151,7 +171,7 @@
             done();
           });
 
-          element.set("enabled", true);
+          element.set("shouldFetch", true);
         });
       });
     </script>

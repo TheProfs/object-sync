@@ -99,10 +99,16 @@ timing issues.
         will take place. Most commonly used to conditionally enable syncing
         if for example a user is logged-in. Resetting this value to `true` will
         re-trigger an initial fetch */
-        enabled: {
+        shouldFetch: {
           type: Boolean,
           value: false,
           observer: "_fetchInitialObject"
+        },
+
+        /** Set to `true` to prevent all requests for this element */
+        disabled: {
+          type: Boolean,
+          value: false
         },
 
         /** Message to be displayed if object was synced succesfully */
@@ -160,15 +166,15 @@ timing issues.
         if (!this._fetchedInitialValue) return false;
 
         this.debounce("_syncingValueChange", function() {
-          this._syncObjectToRemote(changes.base, this.enabled);
+          this._syncObjectToRemote(changes.base);
         }, 750);
       },
 
-      _fetchInitialObject: function(enabled) {
-        if (!enabled) return false;
+      _fetchInitialObject: function(shouldFetch) {
+        if (!shouldFetch || this.disabled) return false;
 
         /*
-         * `enabled` prop observer might trigger many times, until it's set,
+         * `shouldFetch` prop observer might trigger many times, until it's set,
          * for example if it's bound to a logged-in-user type variable, user
          * would be first logged-out until the system logs him in
          * (in AJAX-login mechanisms)
@@ -180,8 +186,8 @@ timing issues.
         }.bind(this));
       },
 
-      _syncObjectToRemote: function(value, enabled) {
-        if (!enabled) return false;
+      _syncObjectToRemote: function(value) {
+        if (this.disabled) return false;
 
         this.$.ajaxPut.body = JSON.stringify(value);
         this.$.ajaxPut.generateRequest();
